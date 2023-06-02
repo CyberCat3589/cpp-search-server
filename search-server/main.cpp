@@ -118,7 +118,7 @@ vector<pair<int, int>> FindAllDocuments(const vector<pair<int, vector<string>>>&
     for (const auto& document : documents) {
         const int relevance = MatchDocument(document, query_words);
         if (relevance > 0) {
-            matched_documents.push_back({document.first, relevance});
+            matched_documents.push_back({relevance, document.first});
         }
     }
     return matched_documents;
@@ -134,6 +134,9 @@ vector<pair<int, int>> FindTopDocuments(const vector<pair<int, vector<string>>>&
     vector<pair<int, int>> top_documents = FindAllDocuments(documents, query_words);
     sort(top_documents.begin(), top_documents.end());
     reverse(top_documents.begin(), top_documents.end());
+    
+    // Переместил проверку соответствия итогового вектора константе сюда
+    if(top_documents.size() > MAX_RESULT_DOCUMENT_COUNT) top_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
     return top_documents;
 } 
 
@@ -151,10 +154,7 @@ int main() {
 
     const string query = ReadLine();
 
-    int count_iter = MAX_RESULT_DOCUMENT_COUNT;
-    for (auto [document_id, relevance] : FindTopDocuments(documents, stop_words, query)) {
-        if(count_iter <= 0) break;
+    for (auto [relevance, document_id] : FindTopDocuments(documents, stop_words, query)) {
         cout << "{ document_id = "s << document_id << ", relevance = "s << relevance << " }"s << endl;
-        --count_iter;
     }
 }
