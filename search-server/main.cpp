@@ -7,21 +7,64 @@
 
 using namespace std;
 
+// структура хранит ID документа и его содержание
 struct DocumentContent;
-struct Document;
-string ReadLine();
-int ReadLineWithNumber();
-vector<string> SplitIntoWords(const string& text);
-set<string> ParseStopWords(const string& text);
-vector<string> SplitIntoWordsNoStop(const string& text, const set<string>& stop_words);
-void AddDocument(vector<DocumentContent>& documents, const set<string>& stop_words, int document_id, const string& document);
-set<string> ParseQuery(const string& text, const set<string>& stop_words);
-int MatchDocument(const DocumentContent& document_content, const set<string>& query_words);
-vector<Document> FindAllDocuments(const vector<DocumentContent>& documents, const set<string>& query_words);
-vector<Document> FindTopDocuments(const vector<DocumentContent>& documents, const set<string>& stop_words, const string& raw_query);
-bool HasDocumentGreaterRelevance(Document lhs, Document rhs);
 
+// структура хранит ID документа и его релевантность
+struct Document;
+
+// функция производит чтение введенной строки
+string ReadLine();
+
+// функция производит чтение введенного числа
+int ReadLineWithNumber();
+
+// функция возвращает слова из строки 
+vector<string> SplitIntoWords(const string& text);
+
+// функция возвращает стоп-слова из строки
+set<string> ParseStopWords(const string& text);
+
+// функция разбивает строку на слова, игнорируя стоп-слова
+vector<string> SplitIntoWordsNoStop(const string& text, const set<string>& stop_words);
+
+// функция добавляет новый документ в контейнер локументов
+void AddDocument(vector<DocumentContent>& documents, const set<string>& stop_words, int document_id, const string& document);
+
+// функция разбивает запрос на ключевые слова без стоп-слов
+set<string> ParseQuery(const string& text, const set<string>& stop_words);
+
+// функция возвращает релевантность, переданного в неё документа
+int MatchDocument(const DocumentContent& document_content, const set<string>& query_words);
+
+// функция возвращает документы, релевантность которых больше 0
+vector<Document> FindAllDocuments(const vector<DocumentContent>& documents, const set<string>& query_words);
+
+// функция возвращает топ документов с самой высокой релевантностью
+vector<Document> FindTopDocuments(const vector<DocumentContent>& documents, const set<string>& stop_words, const string& raw_query);
+
+// функция-компаратор
+bool HasDocumentGreaterRelevance(Document lhs, Document rhs); 
+
+// кол-во возвращаемых документов в FindTopDocuments
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
+
+class SearchServer {
+public:
+    // функция добавляет новый документ в контейнер локументов
+    void AddDocument(int document_id, const string& document) {
+        const vector<string> words = SplitIntoWordsNoStop(document, stop_words_);
+        documents_.push_back({document_id, words});
+    }
+private:
+    struct DocumentContent {
+        int id = 0;
+        vector<string> words;
+    };
+    
+    vector<DocumentContent> documents_; // контейнер документов
+    set<string> stop_words_; // контейнер стоп-слов
+};
 
 struct DocumentContent
 {
@@ -40,18 +83,19 @@ int main() {
     const string stop_words_joined = ReadLine();
     const set<string> stop_words = ParseStopWords(stop_words_joined);
 
-    // Read documents
+    // Чтение документов
+    SearchServer server;
     vector<DocumentContent> documents;
     const int document_count = ReadLineWithNumber();
     for (int document_id = 0; document_id < document_count; ++document_id) {
-        AddDocument(documents, stop_words, document_id, ReadLine());
+        server.AddDocument(document_id, ReadLine());
     }
 
-    const string query = ReadLine();
+    /*const string query = ReadLine();
     for (auto [document_id, relevance] : FindTopDocuments(documents, stop_words, query)) {
         cout << "{ document_id = "s << document_id << ", relevance = "s << relevance << " }"s
              << endl;
-    }
+    }*/
 }
 
 string ReadLine() {
