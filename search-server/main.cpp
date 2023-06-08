@@ -22,17 +22,8 @@ int ReadLineWithNumber();
 // функция возвращает слова из строки 
 vector<string> SplitIntoWords(const string& text);
 
-// функция возвращает стоп-слова из строки
-set<string> ParseStopWords(const string& text);
-
-// функция разбивает строку на слова, игнорируя стоп-слова
-vector<string> SplitIntoWordsNoStop(const string& text, const set<string>& stop_words);
-
-// функция добавляет новый документ в контейнер локументов
-void AddDocument(vector<DocumentContent>& documents, const set<string>& stop_words, int document_id, const string& document);
-
 // функция разбивает запрос на ключевые слова без стоп-слов
-set<string> ParseQuery(const string& text, const set<string>& stop_words);
+//set<string> ParseQuery(const string& text, const set<string>& stop_words);
 
 // функция возвращает релевантность, переданного в неё документа
 int MatchDocument(const DocumentContent& document_content, const set<string>& query_words);
@@ -41,7 +32,7 @@ int MatchDocument(const DocumentContent& document_content, const set<string>& qu
 vector<Document> FindAllDocuments(const vector<DocumentContent>& documents, const set<string>& query_words);
 
 // функция возвращает топ документов с самой высокой релевантностью
-vector<Document> FindTopDocuments(const vector<DocumentContent>& documents, const set<string>& stop_words, const string& raw_query);
+//vector<Document> FindTopDocuments(const vector<DocumentContent>& documents, const set<string>& stop_words, const string& raw_query);
 
 // функция-компаратор
 bool HasDocumentGreaterRelevance(Document lhs, Document rhs); 
@@ -53,9 +44,19 @@ class SearchServer {
 public:
     // функция добавляет новый документ в контейнер локументов
     void AddDocument(int document_id, const string& document) {
-        const vector<string> words = SplitIntoWordsNoStop(document, stop_words_);
+        const vector<string> words = SplitIntoWordsNoStop(document);
         documents_.push_back({document_id, words});
     }
+
+    // функция добавляет стоп-слова из строки в контейнер стоп-слов
+    void SetStopWords(const string& text) 
+    {
+        for (const string& word : SplitIntoWords(text)) 
+        {
+            stop_words_.insert(word);
+        }
+    }
+
 private:
     struct DocumentContent {
         int id = 0;
@@ -64,6 +65,19 @@ private:
     
     vector<DocumentContent> documents_; // контейнер документов
     set<string> stop_words_; // контейнер стоп-слов
+
+    // функция разбивает строку на слова, игнорируя стоп-слова
+    vector<string> SplitIntoWordsNoStop(const string& text) 
+    {
+        vector<string> words;
+        for (const string& word : SplitIntoWords(text)) {
+            if (stop_words_.count(word) == 0) {
+                words.push_back(word);
+            }
+        }
+        return words;
+    }
+
 };
 
 struct DocumentContent
@@ -78,13 +92,13 @@ struct Document
     int relevance;
 };
 
-
 int main() {
+    SearchServer server;
+
     const string stop_words_joined = ReadLine();
-    const set<string> stop_words = ParseStopWords(stop_words_joined);
+    //const set<string> stop_words = server.SetStopWords(stop_words_joined);
 
     // Чтение документов
-    SearchServer server;
     vector<DocumentContent> documents;
     const int document_count = ReadLineWithNumber();
     for (int document_id = 0; document_id < document_count; ++document_id) {
@@ -131,36 +145,13 @@ vector<string> SplitIntoWords(const string& text) {
     return words;
 }
 
-set<string> ParseStopWords(const string& text) {
-    set<string> stop_words;
-    for (const string& word : SplitIntoWords(text)) {
-        stop_words.insert(word);
-    }
-    return stop_words;
-}
-
-vector<string> SplitIntoWordsNoStop(const string& text, const set<string>& stop_words) {
-    vector<string> words;
-    for (const string& word : SplitIntoWords(text)) {
-        if (stop_words.count(word) == 0) {
-            words.push_back(word);
-        }
-    }
-    return words;
-}
-
-void AddDocument(vector<DocumentContent>& documents, const set<string>& stop_words, int document_id, const string& document) {
-    const vector<string> words = SplitIntoWordsNoStop(document, stop_words);
-    documents.push_back({document_id, words});
-}
-
-set<string> ParseQuery(const string& text, const set<string>& stop_words) {
+/*set<string> ParseQuery(const string& text, const set<string>& stop_words) {
     set<string> query_words;
     for (const string& word : SplitIntoWordsNoStop(text, stop_words)) {
         query_words.insert(word);
     }
     return query_words;
-}
+}*/
 
 int MatchDocument(const DocumentContent& document_content, const set<string>& query_words) {
     if (query_words.empty()) {
@@ -191,7 +182,7 @@ vector<Document> FindAllDocuments(const vector<DocumentContent>& documents, cons
 }
 
 // Возвращает топ-5 самых релевантных документов в виде пар: {id, релевантность}
-vector<Document> FindTopDocuments(const vector<DocumentContent>& documents, const set<string>& stop_words, const string& raw_query) {
+/*vector<Document> FindTopDocuments(const vector<DocumentContent>& documents, const set<string>& stop_words, const string& raw_query) {
     const set<string> query_words = ParseQuery(raw_query, stop_words);
     auto matched_documents = FindAllDocuments(documents, query_words);
 
@@ -202,7 +193,7 @@ vector<Document> FindTopDocuments(const vector<DocumentContent>& documents, cons
     }
     
     return matched_documents;
-}
+}*/
 
 bool HasDocumentGreaterRelevance(Document lhs, Document rhs)
 {
