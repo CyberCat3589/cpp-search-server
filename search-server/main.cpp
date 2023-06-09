@@ -59,7 +59,7 @@ public:
     }
 
     // Возвращает топ-5 самых релевантных документов в виде пар: {id, релевантность}
-    vector<Document> FindTopDocuments(const string& raw_query) 
+    vector<Document> FindTopDocuments(const string& raw_query) const
     {
         const set<string> query_words = ParseQuery(raw_query);
         auto matched_documents = FindAllDocuments(query_words);
@@ -85,7 +85,7 @@ private:
     set<string> stop_words_; // контейнер стоп-слов
 
     // функция разбивает строку на слова
-    vector<string> SplitIntoWords(const string& text) 
+    vector<string> SplitIntoWords(const string& text) const
     {
         vector<string> words;
         string word;
@@ -109,7 +109,7 @@ private:
     }
 
     // функция разбивает строку на слова, игнорируя стоп-слова
-    vector<string> SplitIntoWordsNoStop(const string& text) 
+    vector<string> SplitIntoWordsNoStop(const string& text) const
     {
         vector<string> words;
         for (const string& word : SplitIntoWords(text)) {
@@ -121,7 +121,7 @@ private:
     }
 
     // функция для каждого документа возвращает его релевантность и id
-    vector<Document> FindAllDocuments(const set<string>& query_words) 
+    vector<Document> FindAllDocuments(const set<string>& query_words) const
     {
         vector<Document> matched_documents;
         for (const auto& document : documents_) {
@@ -156,7 +156,7 @@ private:
     }
 
     // функция разбивает запрос на ключевые слова без стоп-слов
-    set<string> ParseQuery(const string& text) 
+    set<string> ParseQuery(const string& text) const
     {
         set<string> query_words;
         for (const string& word : SplitIntoWordsNoStop(text)) 
@@ -189,7 +189,7 @@ SearchServer CreateSearchServer()
 
 int main() 
 {
-    SearchServer srv = CreateSearchServer();
+    const SearchServer srv = CreateSearchServer();
 
     const string query = ReadLine();
     for (auto [document_id, relevance] : srv.FindTopDocuments(query)) 
