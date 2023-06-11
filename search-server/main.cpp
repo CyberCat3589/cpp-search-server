@@ -31,12 +31,6 @@ int ReadLineWithNumber()
     return result;
 }
 
-// функция-компаратор
-bool HasDocumentGreaterRelevance(Document lhs, Document rhs)
-{
-    return lhs.relevance > rhs.relevance;
-} 
-
 // кол-во возвращаемых документов в FindTopDocuments
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
@@ -64,7 +58,10 @@ public:
         const set<string> query_words = ParseQuery(raw_query);
         auto matched_documents = FindAllDocuments(query_words);
 
-        sort(matched_documents.begin(), matched_documents.end(), HasDocumentGreaterRelevance);
+        sort(matched_documents.begin(), matched_documents.end(),
+        [](Document lhs, Document rhs){ 
+            return lhs.relevance > rhs.relevance;
+        });
     
         if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) 
         {
