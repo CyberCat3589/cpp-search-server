@@ -56,8 +56,8 @@ public:
     // Возвращает топ-5 самых релевантных документов в виде пар: {id, релевантность}
     vector<Document> FindTopDocuments(const string& raw_query) const
     {
-        const set<string> query_words = ParseQuery(raw_query);
-        auto matched_documents = FindAllDocuments(query_words);
+        const Query query = ParseQuery(raw_query);
+        auto matched_documents = FindAllDocuments(query.plus_words, query.minus_words);
 
         sort(matched_documents.begin(), matched_documents.end(),
         [](Document lhs, Document rhs)
@@ -128,11 +128,11 @@ private:
     }
 
     // функция для каждого документа возвращает его релевантность и id
-    vector<Document> FindAllDocuments(const set<string>& query_words) const
+    vector<Document> FindAllDocuments(const set<string>& query_words, const set<string>& minus_words) const
     {
         vector<Document> matched_documents;
         for (const auto& document : documents_) {
-            const int relevance = MatchDocument(document, query_words);
+            const int relevance = MatchDocument(document, query_words, minus_words);
             if (relevance > 0) 
             {
                 matched_documents.push_back({document.id, relevance});
@@ -142,7 +142,7 @@ private:
     }
 
     // функция возвращает релевантность, переданного в неё документа
-    static int MatchDocument(const DocumentContent& content, const set<string>& query_words) {
+    static int MatchDocument(const DocumentContent& content, const set<string>& query_words, const set<string>& minus_words) {
         if (query_words.empty()) 
         {
             return 0;
@@ -150,11 +150,12 @@ private:
         set<string> matched_words;
         for (const string& word : content.words) 
         {
-            if (matched_words.count(word) != 0) 
+            if(minus_words.count(word) > 0)
             {
-                continue;
+                return 0;
             }
-            if (query_words.count(word) != 0) 
+             
+            else if (query_words.count(word) != 0) 
             {
                 matched_words.insert(word);
             }
@@ -163,14 +164,25 @@ private:
     }
 
     // функция разбивает запрос на ключевые слова без стоп-слов
-    set<string> ParseQuery(const string& text) const
+    Query ParseQuery(const string& text) const
     {
-        set<string> query_words;
+        Query query;
         for (const string& word : SplitIntoWordsNoStop(text)) 
         {
-            query_words.insert(word);
+            if(word[0] == '-')
+            {
+                query.minus_words.insert(word.substr(1));
+            }
+            else
+            {
+                query.plus_words.insert(word);
+            }
         }
-        return query_words;
+        // for(string minus_word : query.minus_words)
+        // {
+        //     cout << minus_word << endl;
+        // }
+        return query;
     }
 };
 
