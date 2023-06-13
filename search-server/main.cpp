@@ -38,7 +38,8 @@ class SearchServer
 {
 public:
     // функция добавляет новый документ в контейнер локументов
-    void AddDocument(int document_id, const string& document) {
+    void AddDocument(int document_id, const string& document) 
+    {
         const vector<string> words = SplitIntoWordsNoStop(document);
         documents_.push_back({document_id, words});
     }
@@ -59,7 +60,8 @@ public:
         auto matched_documents = FindAllDocuments(query_words);
 
         sort(matched_documents.begin(), matched_documents.end(),
-        [](Document lhs, Document rhs){ 
+        [](Document lhs, Document rhs)
+        { 
             return lhs.relevance > rhs.relevance;
         });
     
@@ -73,9 +75,17 @@ public:
 
 private:
     // структура хранит ID документа и его содержание
-    struct DocumentContent {
+    struct DocumentContent 
+    {
         int id = 0;
         vector<string> words;
+    };
+
+    // структура хранит плюс- и минус-слова запроса
+    struct Query
+    {
+        set<string> plus_words;
+        set<string> minus_words;
     };
     
     vector<DocumentContent> documents_; // контейнер документов
@@ -162,8 +172,6 @@ private:
         }
         return query_words;
     }
-
-    
 };
 
 // функция считывает стоп-слова и документы из стандартного ввода и возвращает готовый экземрляр SearchServer 
