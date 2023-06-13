@@ -57,7 +57,7 @@ public:
     vector<Document> FindTopDocuments(const string& raw_query) const
     {
         const Query query = ParseQuery(raw_query);
-        auto matched_documents = FindAllDocuments(query.plus_words, query.minus_words);
+        auto matched_documents = FindAllDocuments(query);
 
         sort(matched_documents.begin(), matched_documents.end(),
         [](Document lhs, Document rhs)
@@ -128,11 +128,11 @@ private:
     }
 
     // функция для каждого документа возвращает его релевантность и id
-    vector<Document> FindAllDocuments(const set<string>& query_words, const set<string>& minus_words) const
+    vector<Document> FindAllDocuments(const Query& query) const
     {
         vector<Document> matched_documents;
         for (const auto& document : documents_) {
-            const int relevance = MatchDocument(document, query_words, minus_words);
+            const int relevance = MatchDocument(document, query);
             if (relevance > 0) 
             {
                 matched_documents.push_back({document.id, relevance});
@@ -142,20 +142,19 @@ private:
     }
 
     // функция возвращает релевантность, переданного в неё документа
-    static int MatchDocument(const DocumentContent& content, const set<string>& query_words, const set<string>& minus_words) {
-        if (query_words.empty()) 
+    static int MatchDocument(const DocumentContent& content, const Query& query) {
+        if (query.plus_words.empty()) 
         {
             return 0;
         }
         set<string> matched_words;
         for (const string& word : content.words) 
         {
-            if(minus_words.count(word) > 0)
+            if(query.minus_words.count(word) != 0)
             {
                 return 0;
             }
-             
-            else if (query_words.count(word) != 0) 
+            else if (query.plus_words.count(word) != 0) 
             {
                 matched_words.insert(word);
             }
@@ -178,10 +177,7 @@ private:
                 query.plus_words.insert(word);
             }
         }
-        // for(string minus_word : query.minus_words)
-        // {
-        //     cout << minus_word << endl;
-        // }
+        
         return query;
     }
 };
