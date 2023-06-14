@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 
 using namespace std;
 
@@ -41,7 +42,10 @@ public:
     void AddDocument(int document_id, const string& document) 
     {
         const vector<string> words = SplitIntoWordsNoStop(document);
-        documents_.push_back({document_id, words});
+        for(string word : words)
+        {
+            documents_[word].insert(document_id);
+        }
     }
 
     // функция добавляет стоп-слова из строки в контейнер стоп-слов
@@ -74,12 +78,6 @@ public:
     }
 
 private:
-    // структура хранит ID документа и его содержание
-    struct DocumentContent 
-    {
-        int id = 0;
-        vector<string> words;
-    };
 
     // структура хранит плюс- и минус-слова запроса
     struct Query
@@ -88,7 +86,7 @@ private:
         set<string> minus_words;
     };
     
-    vector<DocumentContent> documents_; // контейнер документов
+    map<string, set<int>> documents_; // словарь документов
     set<string> stop_words_; // контейнер стоп-слов
 
     // функция разбивает строку на слова
@@ -139,6 +137,9 @@ private:
             }
         }
         return matched_documents;
+
+        map<int, int> matched_documents;
+        
     }
 
     // функция возвращает релевантность, переданного в неё документа
