@@ -130,8 +130,10 @@ private:
     {
         vector<Document> matched_documents;
         
-        map<int, int> document_to_relevance;
-        set<int> identificators;
+        map<int, int> document_to_relevance; // словарь: ключ - id документа, значение - релевантность
+        set<int> identificators; // контейнер с id документов, в содержится слово из запроса
+
+        // поиск плюс-слов среди документов
         for(string plus_word : query.plus_words)
         {
             if(word_to_documents_.count(plus_word) > 0)
@@ -145,6 +147,7 @@ private:
             identificators.clear();
         }
         
+        // поиск плюс-слов среди документов
         for(string minus_word : query.minus_words)
         {
             if(word_to_documents_.count(minus_word) > 0)
@@ -158,6 +161,7 @@ private:
             identificators.clear();
         }
         
+        // запись результата в результирующий контейнер
         for(auto [id, relevance] : document_to_relevance)
         {
             matched_documents.push_back({id, relevance});
