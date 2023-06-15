@@ -44,7 +44,7 @@ public:
         const vector<string> words = SplitIntoWordsNoStop(document);
         for(string word : words)
         {
-            documents_[word].insert(document_id);
+            word_to_documents_[word].insert(document_id);
         }
     }
 
@@ -86,7 +86,7 @@ private:
         set<string> minus_words;
     };
     
-    map<string, set<int>> documents_; // словарь документов
+    map<string, set<int>> word_to_documents_; // словарь содержит слова и в каких док-тах они встречаются
     set<string> stop_words_; // контейнер стоп-слов
 
     // функция разбивает строку на слова
@@ -129,38 +129,16 @@ private:
     vector<Document> FindAllDocuments(const Query& query) const
     {
         vector<Document> matched_documents;
-        for (const auto& document : documents_) {
-            const int relevance = MatchDocument(document, query);
-            if (relevance > 0) 
-            {
-                matched_documents.push_back({document.id, relevance});
-            }
-        }
-        return matched_documents;
-
-        map<int, int> matched_documents;
         
-    }
-
-    // функция возвращает релевантность, переданного в неё документа
-    static int MatchDocument(const DocumentContent& content, const Query& query) {
-        if (query.plus_words.empty()) 
+        map<int, int> document_to_relevance;
+        for(string plus_word : query.plus_words)
         {
-            return 0;
-        }
-        set<string> matched_words;
-        for (const string& word : content.words) 
-        {
-            if(query.minus_words.count(word) != 0)
+            if(word_to_documents_.count(plus_word) > 0)
             {
-                return 0;
-            }
-            else if (query.plus_words.count(word) != 0) 
-            {
-                matched_words.insert(word);
+                
             }
         }
-        return static_cast<int>(matched_words.size());
+        
     }
 
     // функция разбивает запрос на ключевые слова без стоп-слов
