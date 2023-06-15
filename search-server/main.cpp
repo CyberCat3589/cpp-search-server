@@ -131,14 +131,39 @@ private:
         vector<Document> matched_documents;
         
         map<int, int> document_to_relevance;
+        set<int> identificators;
         for(string plus_word : query.plus_words)
         {
             if(word_to_documents_.count(plus_word) > 0)
             {
-                
+                identificators = word_to_documents_.at(plus_word);
+                for(int id : identificators)
+                {
+                    document_to_relevance[id] += 1;
+                }
             }
+            identificators.clear();
         }
         
+        for(string minus_word : query.minus_words)
+        {
+            if(word_to_documents_.count(minus_word) > 0)
+            {
+                identificators = word_to_documents_.at(minus_word);
+                for(int id : identificators)
+                {
+                    document_to_relevance.erase(id);
+                }
+            }
+            identificators.clear();
+        }
+        
+        for(auto [id, relevance] : document_to_relevance)
+        {
+            matched_documents.push_back({id, relevance});
+        }
+        
+        return matched_documents;
     }
 
     // функция разбивает запрос на ключевые слова без стоп-слов
