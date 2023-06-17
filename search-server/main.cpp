@@ -45,13 +45,13 @@ public:
     {
         ++document_count_;
         const vector<string> words = SplitIntoWordsNoStop(document);
+
+        //TF
+        double term_frequency = 1.0 / words.size();
+
         for(string word : words)
         {
-            int frequency = count(words.begin(), words.end(), word);
-
-            //TF
-            double term_frequency = static_cast<double>(frequency) / words.size();
-            word_to_document_fregs_[word].insert({document_id, term_frequency});
+            word_to_document_fregs_[word][document_id] += term_frequency;
         }
 
     }
@@ -87,6 +87,14 @@ public:
     
 private:
 
+    // хранит слово из запроса и его признаки: стоп и минус
+    struct QueryWord
+    {
+        string word;
+        bool is_minus;
+        bool is_stop_word;
+    };
+
     // структура хранит плюс- и минус-слова запроса
     struct Query
     {
@@ -97,6 +105,11 @@ private:
     map<string, map<int, double>> word_to_document_fregs_; // словарь содержит слова и в каких док-тах они встречаются
     set<string> stop_words_; // контейнер стоп-слов
     int document_count_ = 0; // кол-во документов
+
+    bool IsStopWord(const string& word) const
+    {
+        return stop_words_.count(word) > 0;
+    }
 
     // функция разбивает строку на слова
     vector<string> SplitIntoWords(const string& text) const
@@ -127,7 +140,7 @@ private:
     {
         vector<string> words;
         for (const string& word : SplitIntoWords(text)) {
-            if (stop_words_.count(word) == 0) {
+            if (!IsStopWord(word)) {
                 words.push_back(word);
             }
         }
@@ -190,19 +203,37 @@ private:
         return matched_documents;
     }
 
+    // возвращает слово из запроса и его признаки: стоп и минус
+    QueryWord ParseQueryWord(string text) const
+    {
+        bool is_minus_word = false;
+
+        if(text[0] == '-')
+        {
+            is_minus_word = true;
+            text = text.substr(1);
+        }
+
+        return {text, is_minus_word, IsStopWord(text)};
+    }
+
     // функция разбивает запрос на ключевые слова без стоп-слов
     Query ParseQuery(const string& text) const
     {
         Query query;
         for (const string& word : SplitIntoWordsNoStop(text)) 
         {
-            if(word[0] == '-')
+            const QueryWord query_word = ParseQueryWord(word);
+            if(!query_word.is_stop_word)
             {
-                query.minus_words.insert(word.substr(1));
-            }
-            else
-            {
-                query.plus_words.insert(word);
+                if(query_word.is_minus)
+                {
+                    query.minus_words.insert(query_word.word);
+                }
+                else
+                {
+                    query.plus_words.insert(query_word.word);
+                }
             }
         }
         
