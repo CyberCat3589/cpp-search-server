@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <cmath>
 
 using namespace std;
 
@@ -12,7 +13,7 @@ using namespace std;
 struct Document
 {
     int id;
-    int relevance;
+    double relevance;
 };
 
 // функция производит чтение введенной строки
@@ -38,14 +39,21 @@ const int MAX_RESULT_DOCUMENT_COUNT = 5;
 class SearchServer 
 {
 public:
+
     // функция добавляет новый документ в контейнер локументов
     void AddDocument(int document_id, const string& document) 
     {
+        ++document_count_;
         const vector<string> words = SplitIntoWordsNoStop(document);
         for(string word : words)
         {
-            word_to_documents_[word].insert(document_id);
+            int frequency = count(words.begin(), words.end(), word);
+
+            //TF
+            double term_frequency = static_cast<double>(frequency) / words.size();
+            word_to_document_fregs_[word].insert({document_id, term_frequency});
         }
+
     }
 
     // функция добавляет стоп-слова из строки в контейнер стоп-слов
@@ -76,7 +84,7 @@ public:
     
         return matched_documents;
     }
-
+    
 private:
 
     // структура хранит плюс- и минус-слова запроса
@@ -86,8 +94,9 @@ private:
         set<string> minus_words;
     };
     
-    map<string, set<int>> word_to_documents_; // словарь содержит слова и в каких док-тах они встречаются
+    map<string, map<int, double>> word_to_document_fregs_; // словарь содержит слова и в каких док-тах они встречаются
     set<string> stop_words_; // контейнер стоп-слов
+    int document_count_ = 0; // кол-во документов
 
     // функция разбивает строку на слова
     vector<string> SplitIntoWords(const string& text) const
@@ -130,41 +139,52 @@ private:
     {
         vector<Document> matched_documents;
         
-        map<int, int> document_to_relevance; // словарь: ключ - id документа, значение - релевантность
-        set<int> identificators; // контейнер с id документов, в содержится слово из запроса
+        map<int, double> document_to_relevance; // словарь: ключ - id документа, значение - релевантность
+        map<int, double> identificator_and_tf; // контейнер с id документов, в содержится слово из запроса
 
         // поиск плюс-слов среди документов
         for(string plus_word : query.plus_words)
         {
-            if(word_to_documents_.count(plus_word) > 0)
+            if(word_to_document_fregs_.count(plus_word) > 0)
             {
-                identificators = word_to_documents_.at(plus_word);
-                for(int id : identificators)
+                identificator_and_tf = word_to_document_fregs_.at(plus_word);
+
+                // IDF
+                double inverse_document_frequency = log(static_cast<double>(document_count_) / identificator_and_tf.size());
+
+                for(auto [id, tf] : identificator_and_tf)
                 {
-                    document_to_relevance[id] += 1;
+                    double relevance = inverse_document_frequency * tf;
+                    document_to_relevance[id] += relevance;
                 }
             }
-            identificators.clear();
         }
         
-        // поиск плюс-слов среди документов
+        // поиск минус-слов среди документов
+        vector<int> numbers_to_delete; // промежуточный контейнер для удаления
         for(string minus_word : query.minus_words)
         {
-            if(word_to_documents_.count(minus_word) > 0)
+            if(word_to_document_fregs_.count(minus_word) > 0)
             {
-                identificators = word_to_documents_.at(minus_word);
-                for(int id : identificators)
+                identificator_and_tf = word_to_document_fregs_.at(minus_word);
+                for(auto [id, tf] : identificator_and_tf)
                 {
-                    document_to_relevance.erase(id);
+                    // запись ID документа, который необходимо удалить в промежуточный контейнер
+                    numbers_to_delete.push_back(id);
                 }
             }
-            identificators.clear();
+
+            // удаление документов, содержащих минус-слова из списка релевантных документов
+            for(int num : numbers_to_delete)
+            {
+                document_to_relevance.erase(num);
+            }
         }
         
         // запись результата в результирующий контейнер
         for(auto [id, relevance] : document_to_relevance)
         {
-            matched_documents.push_back({id, relevance});
+            matched_documents.push_back({id, static_cast<double>(relevance)});
         }
         
         return matched_documents;
@@ -199,7 +219,8 @@ SearchServer CreateSearchServer()
     server.SetStopWords(stop_words_joined);
 
     // Чтение документов
-    const int document_count = ReadLineWithNumber();
+    int document_count = ReadLineWithNumber();
+
     for (int document_id = 0; document_id < document_count; ++document_id) 
     {
         server.AddDocument(document_id, ReadLine());
@@ -217,4 +238,5 @@ int main()
     {
         cout << "{ document_id = "s << document_id << ", relevance = "s << relevance << " }"s << endl;
     }
+    
 }
