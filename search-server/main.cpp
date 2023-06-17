@@ -221,7 +221,7 @@ private:
     Query ParseQuery(const string& text) const
     {
         Query query;
-        for (const string& word : SplitIntoWordsNoStop(text)) 
+        for (const string& word : SplitIntoWords(text)) 
         {
             const QueryWord query_word = ParseQueryWord(word);
             if(!query_word.is_stop_word)
