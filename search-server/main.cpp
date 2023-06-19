@@ -6,14 +6,16 @@
 #include <vector>
 #include <map>
 #include <cmath>
+#include <numeric>
 
 using namespace std;
 
-// структура хранит ID документа и его релевантность
+// структура хранит ID документа, его релевантность и средний рейтинг
 struct Document
 {
     int id;
     double relevance;
+    int rating;
 };
 
 // функция производит чтение введенной строки
@@ -33,6 +35,22 @@ int ReadLineWithNumber()
     return result;
 }
 
+vector<int> ReadRating()
+{
+    int ratings_count;
+    cin >> ratings_count;
+
+    vector<int> ratings;
+
+    for(int i = 0; i < ratings_count; ++i)
+    {
+        int rating = 0;
+        ratings.push_back(rating);
+    }
+
+    return ratings;
+}
+
 // кол-во возвращаемых документов в FindTopDocuments
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
@@ -41,10 +59,12 @@ class SearchServer
 public:
 
     // функция добавляет новый документ в контейнер локументов
-    void AddDocument(int document_id, const string& document) 
+    void AddDocument(int document_id, const string& document, vector<int> user_ratings) 
     {
         ++document_count_;
         const vector<string> words = SplitIntoWordsNoStop(document);
+
+        document_ratings_[document_id] = ComputeAverageRating(user_ratings);
 
         //TF
         double term_frequency = 1.0 / words.size();
@@ -105,6 +125,7 @@ private:
     map<string, map<int, double>> word_to_document_fregs_; // словарь содержит слова и в каких док-тах они встречаются
     set<string> stop_words_; // контейнер стоп-слов
     int document_count_ = 0; // кол-во документов
+    map<int, int> document_ratings_; // словарь хранит id документа и его средний рейтинг
 
     bool IsStopWord(const string& word) const
     {
@@ -195,9 +216,11 @@ private:
         }
         
         // запись результата в результирующий контейнер
-        for(auto [id, relevance] : document_to_relevance)
+        for(auto [document_id, relevance] : document_to_relevance)
         {
-            matched_documents.push_back({id, static_cast<double>(relevance)});
+            const int rating = document_ratings_.at(document_id);
+
+            matched_documents.push_back({document_id, relevance, rating});
         }
         
         return matched_documents;
@@ -239,6 +262,15 @@ private:
         
         return query;
     }
+
+    // функция расчитывает средний рейтинг документа
+    int ComputeAverageRating(const vector<int>& ratings)
+    {
+        if(ratings.size() == 0) return 0;
+        int ratings_count = ratings.size();
+        int avr_rating = accumulate(ratings.begin(), ratings.end(), 0) / ratings_count;
+        return avr_rating;
+    }
 };
 
 // функция считывает стоп-слова и документы из стандартного ввода и возвращает готовый экземрляр SearchServer 
@@ -249,12 +281,16 @@ SearchServer CreateSearchServer()
     const string stop_words_joined = ReadLine();
     server.SetStopWords(stop_words_joined);
 
+
     // Чтение документов
     int document_count = ReadLineWithNumber();
 
     for (int document_id = 0; document_id < document_count; ++document_id) 
     {
-        server.AddDocument(document_id, ReadLine());
+        const auto document_content = ReadLine();
+        const auto document_rating = ReadRating();
+        
+        server.AddDocument(document_id, document_content, document_rating);
     }
 
     return server;
@@ -265,9 +301,9 @@ int main()
     const SearchServer srv = CreateSearchServer();
 
     const string query = ReadLine();
-    for (auto [document_id, relevance] : srv.FindTopDocuments(query)) 
+    for (auto [document_id, relevance, rating] : srv.FindTopDocuments(query)) 
     {
-        cout << "{ document_id = "s << document_id << ", relevance = "s << relevance << " }"s << endl;
+        cout << "{ document_id = "s << document_id << ", relevance = "s << relevance << ", rating = " << rating << " }"s << endl;
     }
     
 }
