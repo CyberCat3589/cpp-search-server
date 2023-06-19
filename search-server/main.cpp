@@ -264,7 +264,7 @@ private:
     }
 
     // функция расчитывает средний рейтинг документа
-    int ComputeAverageRating(const vector<int>& ratings)
+    static int ComputeAverageRating(const vector<int>& ratings)
     {
         if(ratings.size() == 0) return 0;
         int ratings_count = ratings.size();
