@@ -68,12 +68,13 @@ class SearchServer
 public:
 
     // функция добавляет новый документ в контейнер локументов
-    void AddDocument(int document_id, const string& document, vector<int> user_ratings) 
+    void AddDocument(int document_id, const string& document, DocumentStatus status, vector<int> user_ratings) 
     {
         ++document_count_;
         const vector<string> words = SplitIntoWordsNoStop(document);
 
         document_ratings_[document_id] = ComputeAverageRating(user_ratings);
+        document_statuses[document_id] = status;
 
         //TF
         double term_frequency = 1.0 / words.size();
@@ -135,6 +136,7 @@ private:
     set<string> stop_words_; // контейнер стоп-слов
     int document_count_ = 0; // кол-во документов
     map<int, int> document_ratings_; // словарь хранит id документа и его средний рейтинг
+    map<int, DocumentStatus> document_statuses; // словарь хранит id документа и его статус
 
     bool IsStopWord(const string& word) const
     {
