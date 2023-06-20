@@ -51,6 +51,15 @@ vector<int> ReadRating()
     return ratings;
 }
 
+// статус документа
+enum class DocumentStatus
+{
+    ACTUAL, 
+    IRRELEVANT, 
+    BANNED, 
+    REMOVED
+};
+
 // кол-во возвращаемых документов в FindTopDocuments
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
@@ -273,37 +282,28 @@ private:
     }
 };
 
-// функция считывает стоп-слова и документы из стандартного ввода и возвращает готовый экземрляр SearchServer 
-SearchServer CreateSearchServer()
-{
-    SearchServer server;
-
-    const string stop_words_joined = ReadLine();
-    server.SetStopWords(stop_words_joined);
-
-
-    // Чтение документов
-    int document_count = ReadLineWithNumber();
-
-    for (int document_id = 0; document_id < document_count; ++document_id) 
-    {
-        const auto document_content = ReadLine();
-        const auto document_rating = ReadRating();
-        
-        server.AddDocument(document_id, document_content, document_rating);
-    }
-
-    return server;
+void PrintDocument(const Document& document) {
+    cout << "{ "s
+         << "document_id = "s << document.id << ", "s
+         << "relevance = "s << document.relevance << ", "s
+         << "rating = "s << document.rating
+         << " }"s << endl;
 }
 
-int main() 
-{
-    const SearchServer srv = CreateSearchServer();
-
-    const string query = ReadLine();
-    for (auto [document_id, relevance, rating] : srv.FindTopDocuments(query)) 
-    {
-        cout << "{ document_id = "s << document_id << ", relevance = "s << relevance << ", rating = " << rating << " }"s << endl;
+int main() {
+    SearchServer search_server;
+    search_server.SetStopWords("и в на"s);
+    search_server.AddDocument(0, "белый кот и модный ошейник"s,        DocumentStatus::ACTUAL, {8, -3});
+    search_server.AddDocument(1, "пушистый кот пушистый хвост"s,       DocumentStatus::ACTUAL, {7, 2, 7});
+    search_server.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::ACTUAL, {5, -12, 2, 1});
+    search_server.AddDocument(3, "ухоженный скворец евгений"s,         DocumentStatus::BANNED, {9});
+    cout << "ACTUAL:"s << endl;
+    for (const Document& document : search_server.FindTopDocuments("пушистый ухоженный кот"s, DocumentStatus::ACTUAL)) {
+        PrintDocument(document);
     }
-    
+    cout << "BANNED:"s << endl;
+    for (const Document& document : search_server.FindTopDocuments("пушистый ухоженный кот"s, DocumentStatus::BANNED)) {
+        PrintDocument(document);
+    }
+    return 0;
 }
