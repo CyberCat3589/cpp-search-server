@@ -96,10 +96,10 @@ public:
     }
 
     // Возвращает топ-5 самых релевантных документов в виде пар: {id, релевантность}
-    vector<Document> FindTopDocuments(const string& raw_query) const
+    vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status) const
     {
         const Query query = ParseQuery(raw_query);
-        auto matched_documents = FindAllDocuments(query);
+        auto matched_documents = FindAllDocuments(query, status);
 
         sort(matched_documents.begin(), matched_documents.end(),
         [](Document lhs, Document rhs)
@@ -180,12 +180,13 @@ private:
     }
 
     // функция для каждого документа возвращает его релевантность и id
-    vector<Document> FindAllDocuments(const Query& query) const
+    vector<Document> FindAllDocuments(const Query& query, DocumentStatus status) const
     {
         vector<Document> matched_documents;
         
         map<int, double> document_to_relevance; // словарь: ключ - id документа, значение - релевантность
-        map<int, double> identificator_and_tf; // контейнер с id документов, в содержится слово из запроса
+        map<int, double> identificator_and_tf; // контейнер с id документов, в которых содержится слово из запроса
+        set<int> numbers_to_delete; // промежуточный контейнер для удаления
 
         // поиск плюс-слов среди документов
         for(string plus_word : query.plus_words)
@@ -199,6 +200,11 @@ private:
 
                 for(auto [id, tf] : identificator_and_tf)
                 {
+                    if(document_statuses.at(id) != status)
+                    {
+                        numbers_to_delete.insert(id);
+                        continue;
+                    }
                     double relevance = inverse_document_frequency * tf;
                     document_to_relevance[id] += relevance;
                 }
@@ -206,7 +212,6 @@ private:
         }
         
         // поиск минус-слов среди документов
-        vector<int> numbers_to_delete; // промежуточный контейнер для удаления
         for(string minus_word : query.minus_words)
         {
             if(word_to_document_fregs_.count(minus_word) > 0)
@@ -215,7 +220,7 @@ private:
                 for(auto [id, tf] : identificator_and_tf)
                 {
                     // запись ID документа, который необходимо удалить в промежуточный контейнер
-                    numbers_to_delete.push_back(id);
+                    numbers_to_delete.insert(id);
                 }
             }
 
