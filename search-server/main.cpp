@@ -68,12 +68,12 @@ class SearchServer
 public:
 
     // функция добавляет новый документ в контейнер локументов
-    void AddDocument(int document_id, const string& document, DocumentStatus status, vector<int> user_ratings) 
+    void AddDocument(int document_id, const string& document, DocumentStatus status, vector<int> ratings) 
     {
         ++document_count_;
         const vector<string> words = SplitIntoWordsNoStop(document);
 
-        document_ratings_[document_id] = ComputeAverageRating(user_ratings);
+        document_ratings_[document_id] = ComputeAverageRating(ratings);
         document_statuses[document_id] = status;
 
         //TF
@@ -96,7 +96,7 @@ public:
     }
 
     // Возвращает топ-5 самых релевантных документов в виде пар: {id, релевантность}
-    vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status) const
+    vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const
     {
         const Query query = ParseQuery(raw_query);
         auto matched_documents = FindAllDocuments(query, status);
