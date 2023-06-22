@@ -6,6 +6,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <tuple>
 
 using namespace std;
 
@@ -97,7 +98,41 @@ public:
 
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const
     {
-        
+        Query query = ParseQuery(raw_query);
+        vector<string> matched_words;
+
+        for(string word : query.plus_words)
+        {
+            if(word_to_document_freqs_.count(word) > 0 && count(matched_words.begin(), matched_words.end(), word) == 0)
+            {
+                for(auto [id, _] : word_to_document_freqs_.at(word))
+                {
+                    if(id == document_id)
+                    {
+                        matched_words.push_back(word);
+                    }
+                }
+            }
+        }
+
+        DocumentStatus status = documents_.at(document_id).status;
+
+        for(string word : query.minus_words)
+        {
+            if(word_to_document_freqs_.count(word) > 0 && count(matched_words.begin(), matched_words.end(), word) == 0)
+            {
+                for(auto [id, _] : word_to_document_freqs_.at(word))
+                {
+                    if(id == document_id)
+                    {
+                        matched_words.clear();
+                        return tuple(matched_words, status);
+                    }
+                }
+            }
+        }
+
+        return tuple(matched_words, status);
     }
 
 private:
