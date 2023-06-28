@@ -14,12 +14,14 @@ using namespace std;
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 const double EPSILON = 1e-6;
 
+// считывание строки из ввода
 string ReadLine() {
     string s;
     getline(cin, s);
     return s;
 }
 
+// считывание числа из ввода
 int ReadLineWithNumber() {
     int result;
     cin >> result;
@@ -27,6 +29,7 @@ int ReadLineWithNumber() {
     return result;
 }
 
+// разбиение строки на слова
 vector<string> SplitIntoWords(const string& text) {
     vector<string> words;
     string word;
@@ -62,22 +65,26 @@ enum class DocumentStatus {
 
 class SearchServer {
 public:
+
+    // запись стоп-слов из ввода
     void SetStopWords(const string& text) {
         for (const string& word : SplitIntoWords(text)) {
             stop_words_.insert(word);
         }
     }
 
+    // добавление нового документа
     void AddDocument(int document_id, const string& document, DocumentStatus status,
                      const vector<int>& ratings) {
         const vector<string> words = SplitIntoWordsNoStop(document);
-        const double inv_word_count = 1.0 / words.size();
+        const double inv_word_count = 1.0 / words.size(); // расчет term frequency
         for (const string& word : words) {
-            word_to_document_freqs_[word][document_id] += inv_word_count;
+            word_to_document_freqs_[word][document_id] += inv_word_count; 
         }
         documents_.emplace(document_id, DocumentData{ComputeAverageRating(ratings), status});
     }
 
+    // возвращает MAX_RESULT_DOCUMENT_COUNT с наибольшей релевантностью/рейтингом
     vector<Document> FindTopDocuments(const string& raw_query,
                                       DocumentStatus status = DocumentStatus::ACTUAL) const {
         const Query query = ParseQuery(raw_query);
@@ -93,11 +100,13 @@ public:
         return matched_documents;
     }
 
+    // количество документов в системе
     int GetDocumentCount() const
     {
         return static_cast<int>(documents_.size());
     }
 
+    // расчет релевантности документа
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const
     {
         Query query = ParseQuery(raw_query);
@@ -151,6 +160,7 @@ private:
         return stop_words_.count(word) > 0;
     }
 
+    // разбитие строки на слова и фильтрация стоп-слов
     vector<string> SplitIntoWordsNoStop(const string& text) const {
         vector<string> words;
         for (const string& word : SplitIntoWords(text)) {
@@ -161,6 +171,7 @@ private:
         return words;
     }
 
+    // расчет среднего значения рейтинга документа
     static int ComputeAverageRating(const vector<int>& ratings) {
         if (ratings.empty()) {
             return 0;
@@ -178,6 +189,7 @@ private:
         bool is_stop;
     };
 
+    // возврат слова из запроса и его характеристик: стоп или минус слово
     QueryWord ParseQueryWord(string text) const {
         bool is_minus = false;
         // Word shouldn't be empty
