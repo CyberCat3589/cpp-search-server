@@ -101,10 +101,10 @@ public:
     }
 
     // возвращает MAX_RESULT_DOCUMENT_COUNT документов с наибольшей релевантностью/рейтингом
-    // вариант функции с одним параметром
-    vector<Document> FindTopDocuments(const string& raw_query) const {
+    // вариант функции с возможностью указать статус документа
+    vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus document_status = DocumentStatus::ACTUAL) const {
         const Query query = ParseQuery(raw_query);
-        auto matched_documents = FindAllDocuments(query, [](int document_id, DocumentStatus status, int rating) { return status == DocumentStatus::ACTUAL; });
+        auto matched_documents = FindAllDocuments(query, [document_status](int document_id, DocumentStatus status, int rating) { return status == document_status; });
 
         sort(matched_documents.begin(), matched_documents.end(),
              [](const Document& lhs, const Document& rhs) {
@@ -122,46 +122,7 @@ public:
         return static_cast<int>(documents_.size());
     }
 
-    // расчет релевантности документа
-    tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const
-    {
-        Query query = ParseQuery(raw_query);
-        vector<string> matched_words;
-
-        for(string word : query.plus_words)
-        {
-            if(word_to_document_freqs_.count(word) > 0 && count(matched_words.begin(), matched_words.end(), word) == 0)
-            {
-                for(auto [id, _] : word_to_document_freqs_.at(word))
-                {
-                    if(id == document_id)
-                    {
-                        matched_words.push_back(word);
-                    }
-                }
-            }
-        }
-
-        DocumentStatus status = documents_.at(document_id).status;
-
-        for(string word : query.minus_words)
-        {
-            if(word_to_document_freqs_.count(word) > 0)
-            {
-                for(auto [id, _] : word_to_document_freqs_.at(word))
-                {
-                    if(id == document_id)
-                    {
-                        matched_words.clear();
-                        return tuple(matched_words, status);
-                    }
-                }
-            }
-        }
-
-        return tuple(matched_words, status);
-    }
-
+    
 private:
     struct DocumentData {
         int rating;
@@ -241,6 +202,7 @@ private:
         return log(documents_.size() * 1.0 / word_to_document_freqs_.at(word).size());
     }
 
+    // расчет релевантности документа
     template <typename KeyMapper>
     vector<Document> FindAllDocuments(const Query& query, KeyMapper key_mapper) const {
         map<int, double> document_to_relevance;
