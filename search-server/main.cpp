@@ -352,6 +352,15 @@ void AssertImpl(bool value, const string& expr_str, const string& file, const st
 
 #define ASSERT_HINT(expr, hint) AssertImpl(!!(expr), #expr, __FILE__, __FUNCTION__, __LINE__, (hint))
 
+// макрос для запуска тестов
+template <typename F>
+void RunTestImpl(const F& fnc, const string& fnc_str) 
+{
+    fnc();
+    cerr <<  fnc_str  << " OK"s << endl;
+}
+
+#define RUN_TEST(func)  RunTestImpl(func, #func)
 
 void PrintDocument(const Document& document) {
     cout << "{ "s
