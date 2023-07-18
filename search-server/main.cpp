@@ -74,6 +74,15 @@ public:
         }
     }
 
+    template <typename Container>
+    SearchServer(Container container)
+    {
+        for(string word : container)
+        {
+            if(!word.empty() && (stop_words_.count(word) == 0)) stop_words_.insert(word);
+        }
+    }
+
     // добавление нового документа
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) 
     {
@@ -246,6 +255,17 @@ void PrintDocument(const Document& document) {
 }
 
 int main() {
+
+    // инициализируем поисковую систему, передавая стоп-слова в контейнере vector
+    const vector<string> stop_words_vector = {"и"s, "в"s, "на"s, ""s, "в"s};
+    SearchServer search_server1(stop_words_vector);
+    // инициализируем поисковую систему передавая стоп-слова в контейнере set
+    const set<string> stop_words_set = {"и"s, "в"s, "на"s};
+    SearchServer search_server2(stop_words_set);
+    // инициализируем поисковую систему строкой со стоп-словами, разделёнными пробелами
+    SearchServer search_server3("  и  в на   "s);
+
+    /*
     SearchServer search_server("и в на"s);
     search_server.AddDocument(0, "белый кот и модный ошейник"s,        DocumentStatus::ACTUAL, {8, -3});
     search_server.AddDocument(1, "пушистый кот пушистый хвост"s,       DocumentStatus::ACTUAL, {7, 2, 7});
@@ -263,5 +283,6 @@ int main() {
     for (const Document& document : search_server.FindTopDocuments("пушистый ухоженный кот"s, [](int document_id, DocumentStatus status, int rating) { return document_id % 2 == 0; })) {
         PrintDocument(document);
     }
+    */
     return 0;
 }
