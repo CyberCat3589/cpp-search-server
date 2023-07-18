@@ -66,16 +66,17 @@ enum class DocumentStatus {
 class SearchServer {
 public:
 
-    // запись стоп-слов из ввода
-    void SetStopWords(const string& text) {
-        for (const string& word : SplitIntoWords(text)) {
+    SearchServer(const string& text)
+    {
+        for (const string& word : SplitIntoWords(text)) 
+        {
             stop_words_.insert(word);
         }
     }
 
     // добавление нового документа
-    void AddDocument(int document_id, const string& document, DocumentStatus status,
-                     const vector<int>& ratings) {
+    void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) 
+    {
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size(); // расчет term frequency
         for (const string& word : words) {
@@ -245,8 +246,7 @@ void PrintDocument(const Document& document) {
 }
 
 int main() {
-    SearchServer search_server;
-    search_server.SetStopWords("и в на"s);
+    SearchServer search_server("и в на"s);
     search_server.AddDocument(0, "белый кот и модный ошейник"s,        DocumentStatus::ACTUAL, {8, -3});
     search_server.AddDocument(1, "пушистый кот пушистый хвост"s,       DocumentStatus::ACTUAL, {7, 2, 7});
     search_server.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::ACTUAL, {5, -12, 2, 1});
