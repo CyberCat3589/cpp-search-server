@@ -171,15 +171,28 @@ private:
     map<string, map<int, double>> word_to_document_freqs_; // слова, id документов, tf
     map<int, DocumentData> documents_; // id, рейтинг, статус
 
-    bool IsStopWord(const string& word) const {
+    static bool IsValidWord(const string& word) 
+    {
+        // A valid word must not contain special characters
+        return none_of(word.begin(), word.end(), [](char c) 
+        {
+            return c >= '\0' && c < ' ';
+        });
+    }
+
+    bool IsStopWord(const string& word) const 
+    {
         return stop_words_.count(word) > 0;
     }
 
     // разбитие строки на слова и фильтрация стоп-слов
-    vector<string> SplitIntoWordsNoStop(const string& text) const {
+    vector<string> SplitIntoWordsNoStop(const string& text) const 
+    {
         vector<string> words;
-        for (const string& word : SplitIntoWords(text)) {
-            if (!IsStopWord(word)) {
+        for (const string& word : SplitIntoWords(text)) 
+        {
+            if (!IsStopWord(word)) 
+            {
                 words.push_back(word);
             }
         }
@@ -187,47 +200,59 @@ private:
     }
 
     // расчет среднего значения рейтинга документа
-    static int ComputeAverageRating(const vector<int>& ratings) {
-        if (ratings.empty()) {
+    static int ComputeAverageRating(const vector<int>& ratings) 
+    {
+        if (ratings.empty()) 
+        {
             return 0;
         }
         int rating_sum = 0;
-        for (const int rating : ratings) {
+        for (const int rating : ratings) 
+        {
             rating_sum += rating;
         }
         return rating_sum / static_cast<int>(ratings.size());
     }
 
-    struct QueryWord {
+    struct QueryWord 
+    {
         string data;
         bool is_minus;
         bool is_stop;
     };
 
     // возврат слова из запроса и его характеристик: стоп или минус слово
-    QueryWord ParseQueryWord(string text) const {
+    QueryWord ParseQueryWord(string text) const 
+    {
         bool is_minus = false;
         // Word shouldn't be empty
-        if (text[0] == '-') {
+        if (text[0] == '-') 
+        {
             is_minus = true;
             text = text.substr(1);
         }
         return {text, is_minus, IsStopWord(text)};
     }
 
-    struct Query {
+    struct Query 
+    {
         set<string> plus_words;
         set<string> minus_words;
     };
 
-    Query ParseQuery(const string& text) const {
+    Query ParseQuery(const string& text) const 
+    {
         Query query;
-        for (const string& word : SplitIntoWords(text)) {
+        for (const string& word : SplitIntoWords(text)) 
+        {
             const QueryWord query_word = ParseQueryWord(word);
-            if (!query_word.is_stop) {
-                if (query_word.is_minus) {
+            if (!query_word.is_stop) 
+            {
+                if (query_word.is_minus) 
+                {
                     query.minus_words.insert(query_word.data);
-                } else {
+                } else 
+                {
                     query.plus_words.insert(query_word.data);
                 }
             }
@@ -242,31 +267,40 @@ private:
 
     // расчет релевантности документа
     template <typename KeyMapper>
-    vector<Document> FindAllDocuments(const Query& query, KeyMapper key_mapper) const {
+    vector<Document> FindAllDocuments(const Query& query, KeyMapper key_mapper) const 
+    {
         map<int, double> document_to_relevance;
-        for (const string& word : query.plus_words) {
-            if (word_to_document_freqs_.count(word) == 0) {
+        for (const string& word : query.plus_words) 
+        {
+            if (word_to_document_freqs_.count(word) == 0) 
+            {
                 continue;
             }
             const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
-            for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) {
-                if (key_mapper(document_id, documents_.at(document_id).status, documents_.at(document_id).rating)) {
+            for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) 
+            {
+                if (key_mapper(document_id, documents_.at(document_id).status, documents_.at(document_id).rating)) 
+                {
                     document_to_relevance[document_id] += term_freq * inverse_document_freq;
                 }
             }
         }
 
-        for (const string& word : query.minus_words) {
-            if (word_to_document_freqs_.count(word) == 0) {
+        for (const string& word : query.minus_words) 
+        {
+            if (word_to_document_freqs_.count(word) == 0) 
+            {
                 continue;
             }
-            for (const auto [document_id, _] : word_to_document_freqs_.at(word)) {
+            for (const auto [document_id, _] : word_to_document_freqs_.at(word)) 
+            {
                 document_to_relevance.erase(document_id);
             }
         }
 
         vector<Document> matched_documents;
-        for (const auto [document_id, relevance] : document_to_relevance) {
+        for (const auto [document_id, relevance] : document_to_relevance) 
+        {
             matched_documents.push_back(
                 {document_id, relevance, documents_.at(document_id).rating});
         }
@@ -274,7 +308,8 @@ private:
     }
 };
 
-void PrintDocument(const Document& document) {
+void PrintDocument(const Document& document) 
+{
     cout << "{ "s
          << "document_id = "s << document.id << ", "s
          << "relevance = "s << document.relevance << ", "s
