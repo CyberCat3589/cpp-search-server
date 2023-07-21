@@ -108,7 +108,7 @@ public:
     template <typename DocumentPredicate>
     [[nodiscard]] bool FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate, vector<Document>& result) const 
     {
-        if(CheckQuery(raw_query) || !IsValidWord(raw_query)) return false; 
+        if(!CheckQuery(raw_query) || !IsValidWord(raw_query)) return false; 
 
         const Query query = ParseQuery(raw_query);
         auto matched_documents = FindAllDocuments(query, document_predicate);
@@ -142,9 +142,13 @@ public:
         return static_cast<int>(documents_.size());
     }
 
-    bool MatchDocument(const string& raw_query, int document_id, tuple<vector<string>, DocumentStatus>& result) const 
+    [[nodiscard]] bool MatchDocument(const string& raw_query, int document_id, tuple<vector<string>, DocumentStatus>& result) const 
     {
+
+        if(!CheckQuery(raw_query) || IsValidWord(raw_query)) return false;
+
         const Query query = ParseQuery(raw_query);
+        
         vector<string> matched_words;
         for (const string& word : query.plus_words) 
         {
@@ -203,10 +207,10 @@ private:
     {
         for(int i = 0; i < str.size(); ++i)
         {
-            if(str[i] == '-' && (str[i + 1] == '-' || str[i + 1] == ' ')) return true;
+            if(str[i] == '-' && (str[i + 1] == '-' || str[i + 1] == ' ')) return false;
         }
 
-        return false;
+        return true;
     }
 
     static bool IsValidWord(const string& word) 
