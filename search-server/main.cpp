@@ -108,10 +108,10 @@ public:
     template <typename DocumentPredicate>
     [[nodiscard]] bool FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate, vector<Document>& result) const 
     {
-        if(!CheckQuery(raw_query) || !IsValidWord(raw_query)) return false; 
-
         const Query query = ParseQuery(raw_query);
         auto matched_documents = FindAllDocuments(query, document_predicate);
+
+        if (!FindAllDocuments(query, document_predicate, matched_documents)) return false;
 
         sort(matched_documents.begin(), matched_documents.end(),
              [](const Document& lhs, const Document& rhs) {
@@ -121,6 +121,8 @@ public:
         {
             matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
         }
+
+        result = matched_documents;
 
         return true;
     }
@@ -312,57 +314,43 @@ private:
         return log(documents_.size() * 1.0 / word_to_document_freqs_.at(word).size());
     }
 
-    // расчет релевантности документа
-    template <typename KeyMapper>
-    vector<Document> FindAllDocuments(const Query& query, KeyMapper key_mapper) const 
-    {
+    template <typename DocumentPredicate>
+    bool FindAllDocuments(const Query& query,
+                      DocumentPredicate document_predicate, vector<Document>& result) const {
         map<int, double> document_to_relevance;
-        for (const string& word : query.plus_words) 
-        {
-            if (word_to_document_freqs_.count(word) == 0) 
-            {
+        for (const string& word : query.plus_words) {
+            if (word_to_document_freqs_.count(word) == 0) {
                 continue;
             }
             const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
-            for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) 
-            {
-                if (key_mapper(document_id, documents_.at(document_id).status, documents_.at(document_id).rating)) 
-                {
+            for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) {
+                const auto& document_data = documents_.at(document_id);
+                if (document_predicate(document_id, document_data.status, document_data.rating)) {
                     document_to_relevance[document_id] += term_freq * inverse_document_freq;
                 }
             }
         }
-
-        for (const string& word : query.minus_words) 
-        {
-            if (word_to_document_freqs_.count(word) == 0) 
-            {
+ 
+        for (const string& word : query.minus_words) {
+            if (!IsValidWord(word)) return false;
+ 
+            if (word_to_document_freqs_.count(word) == 0) {
                 continue;
             }
-            for (const auto [document_id, _] : word_to_document_freqs_.at(word)) 
-            {
+            for (const auto [document_id, _] : word_to_document_freqs_.at(word)) {
                 document_to_relevance.erase(document_id);
             }
         }
-
+ 
         vector<Document> matched_documents;
-        for (const auto [document_id, relevance] : document_to_relevance) 
-        {
+        for (const auto [document_id, relevance] : document_to_relevance) {
             matched_documents.push_back(
                 {document_id, relevance, documents_.at(document_id).rating});
         }
-        return matched_documents;
+        result = matched_documents;
+        return true;
     }
 };
-
-void PrintDocument(const Document& document) 
-{
-    cout << "{ "s
-         << "document_id = "s << document.id << ", "s
-         << "relevance = "s << document.relevance << ", "s
-         << "rating = "s << document.rating
-         << " }"s << endl;
-}
 
 void PrintDocument(const Document& document) 
 {
