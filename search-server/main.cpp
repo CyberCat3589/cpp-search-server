@@ -73,7 +73,7 @@ public:
 
     inline static constexpr int INVALID_DOCUMENT_ID = -1;
 
-    SearchServer(const string& text)
+    explicit SearchServer(const string& text)
     {
         for (const string& word : SplitIntoWords(text)) 
         {
@@ -82,7 +82,7 @@ public:
     }
 
     template <typename Container>
-    SearchServer(Container container)
+    explicit SearchServer(Container container)
     {
         for(string word : container)
         {
@@ -207,7 +207,7 @@ private:
     {
         for(int i = 0; i < str.size(); ++i)
         {
-            if(str[i] == '-' && (str[i + 1] == '-' || str[i + 1] == ' ')) return false;
+            if(str[i] == '-' && (str[i - 1] == '-' || i == str.size() - 1 || (str[i + 1] && str[i + 1] == ' '))) return false;
         }
 
         return true;
