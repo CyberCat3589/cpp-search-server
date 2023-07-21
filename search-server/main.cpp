@@ -93,12 +93,11 @@ public:
     // добавление нового документа
     [[nodiscard]] bool AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) 
     {
-        // доделать п. 4,5
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size(); // расчет term frequency
         for (const string& word : words) 
         {
-            if(!IsValidWord(word)) return false;
+            if(!IsValidWord(word) || (document_id < 0) || (documents_.count(document_id) > 0)) return false;
             word_to_document_freqs_[word][document_id] += inv_word_count; 
         }
         documents_.emplace(document_id, DocumentData{ComputeAverageRating(ratings), status});
@@ -143,28 +142,51 @@ public:
         return static_cast<int>(documents_.size());
     }
 
-    tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const 
+    bool MatchDocument(const string& raw_query, int document_id, tuple<vector<string>, DocumentStatus>& result) const 
     {
         const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
-        for (const string& word : query.plus_words) {
-            if (word_to_document_freqs_.count(word) == 0) {
+        for (const string& word : query.plus_words) 
+        {
+            if (word_to_document_freqs_.count(word) == 0) 
+            {
                 continue;
             }
-            if (word_to_document_freqs_.at(word).count(document_id)) {
+            if (word_to_document_freqs_.at(word).count(document_id)) 
+            {
                 matched_words.push_back(word);
             }
         }
-        for (const string& word : query.minus_words) {
-            if (word_to_document_freqs_.count(word) == 0) {
+        for (const string& word : query.minus_words) 
+        {
+            if (word_to_document_freqs_.count(word) == 0) 
+            {
                 continue;
             }
-            if (word_to_document_freqs_.at(word).count(document_id)) {
+            if (word_to_document_freqs_.at(word).count(document_id)) 
+            {
                 matched_words.clear();
                 break;
             }
         }
-        return {matched_words, documents_.at(document_id).status};
+        result = {matched_words, documents_.at(document_id).status};
+        return true;
+    }
+
+    int GetDocumentId(int index) const 
+    {
+        if (index > documents_.size() || index < 0)
+            return SearchServer::INVALID_DOCUMENT_ID;
+        int i = 0;
+        int t_id = 0;
+        for (const auto [id, bruh] : documents_)
+        {
+            if (i == index)
+                return id;
+            i++;
+            t_id = id;
+        }
+        return t_id;
     }
     
 private:
