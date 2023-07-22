@@ -93,11 +93,12 @@ public:
     // добавление нового документа
     [[nodiscard]] bool AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) 
     {
+        if(!IsValidDocument(document_id, document)) return false;
+
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size(); // расчет term frequency
         for (const string& word : words) 
         {
-            if(!IsValidWord(word) || (document_id < 0) || (documents_.count(document_id) > 0)) return false;
             word_to_document_freqs_[word][document_id] += inv_word_count; 
         }
         documents_.emplace(document_id, DocumentData{ComputeAverageRating(ratings), status});
@@ -201,12 +202,22 @@ private:
 
     static bool CheckQuery(const string& str)
     {
-        for(int i = 0; i < str.size(); ++i)
-        {
-            if(str[i] == '-' && (str[i + 1] == '-' || str[i + 1] == ' ')) return true;
-        }
+        return CheckMinusWords(str) || IsValidWord(str);
+    }
 
-        return false;
+    bool IsValidDocument(int document_id, const string& document) const 
+    {
+        return !(documents_.count(document_id) > 0 || document_id < 0 || !IsValidWord(document));
+    }
+
+    static bool CheckMinusWords(const string& word)
+    {
+        for (int i = 0; i < word.size(); i++)
+        {
+            if (word[i] == '-' && (word[i - 1] == '-' || i == word.size() - 1 || (word[i + 1] && word[i + 1] == ' ')))
+            return false;
+        }
+        return true;
     }
 
     static bool IsValidWord(const string& word) 
