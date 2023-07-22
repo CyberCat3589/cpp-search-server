@@ -145,6 +145,7 @@ public:
 
     bool MatchDocument(const string& raw_query, int document_id, tuple<vector<string>, DocumentStatus>& result) const 
     {
+        if(CheckQuery(raw_query)) return false;
         const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
         for (const string& word : query.plus_words) 
