@@ -7,7 +7,8 @@
 #include <utility>
 #include <vector>
 #include <tuple>
-#include<math.h>
+#include <math.h>
+#include <optional>
 
 using namespace std;
 
@@ -107,9 +108,9 @@ public:
 
     // возвращает MAX_RESULT_DOCUMENT_COUNT документов с наибольшей релевантностью/рейтингом
     template <typename DocumentPredicate>
-    [[nodiscard]] bool FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate, vector<Document>& result) const 
+    optional<vector<Document>> FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const 
     {
-        if(CheckQuery(raw_query) || !IsValidWord(raw_query)) return false; 
+        if(CheckQuery(raw_query) || !IsValidWord(raw_query)) return nullopt; 
 
         const Query query = ParseQuery(raw_query);
         auto matched_documents = FindAllDocuments(query, document_predicate);
@@ -123,20 +124,20 @@ public:
             matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
         }
 
-        result = matched_documents;
-
-        return true;
+        return matched_documents;
     }
 
-    [[nodiscard]] bool FindTopDocuments(const string& raw_query, DocumentStatus status, vector<Document>& result) const 
+    optional<vector<Document>> FindTopDocuments(const string& raw_query, DocumentStatus status) const 
     {
-        return FindTopDocuments(raw_query, [status](int document_id, DocumentStatus document_status, int rating) {
+        return FindTopDocuments(raw_query, [status](int document_id, DocumentStatus document_status, int rating) 
+            {
                 return document_status == status;
-            }, result);
+            });
     }
  
-    [[nodiscard]] bool FindTopDocuments(const string& raw_query, vector<Document>& result) const {
-        return FindTopDocuments(raw_query, DocumentStatus::ACTUAL, result);
+    optional<vector<Document>> FindTopDocuments(const string& raw_query) const 
+    {
+        return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
     }
 
     // количество документов в системе
@@ -145,14 +146,14 @@ public:
         return static_cast<int>(documents_.size());
     }
 
-    bool MatchDocument(const string& raw_query, int document_id, tuple<vector<string>, DocumentStatus>& result) const 
+    optional<tuple<vector<string>, DocumentStatus>> MatchDocument(const string& raw_query, int document_id) const 
     {
-        if(CheckQuery(raw_query)) return false;
+        if(CheckQuery(raw_query)) return nullopt;
         const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
         for (const string& word : query.plus_words) 
         {
-            if (!IsValidWord(word)) return false;
+            if (!IsValidWord(word)) return nullopt;
             if (word_to_document_freqs_.count(word) == 0) 
             {
                 continue;
@@ -164,7 +165,7 @@ public:
         }
         for (const string& word : query.minus_words) 
         {
-            if (!IsValidWord(word)) return false;
+            if (!IsValidWord(word)) return nullopt;
             if (word_to_document_freqs_.count(word) == 0) 
             {
                 continue;
@@ -175,8 +176,8 @@ public:
                 break;
             }
         }
-        result = {matched_words, documents_.at(document_id).status};
-        return true;
+
+        return tuple{matched_words, documents_.at(document_id).status};
     }
 
     int GetDocumentId(int index) const 
@@ -366,8 +367,7 @@ void PrintDocument(const Document& document)
          << " }"s << endl;
 }
 
-int main() 
-{
+int main() {
     SearchServer search_server("и в на"s);
     // Явно игнорируем результат метода AddDocument, чтобы избежать предупреждения
     // о неиспользуемом результате его вызова
@@ -381,12 +381,11 @@ int main()
     if (!search_server.AddDocument(3, "большой пёс скво\x12рец"s, DocumentStatus::ACTUAL, {1, 3, 2})) {
         cout << "Документ не был добавлен, так как содержит спецсимволы"s << endl;
     }
-    vector<Document> documents;
-    if (search_server.FindTopDocuments("--пушистый"s, documents)) {
-        for (const Document& document : documents) {
+    if (const auto documents = search_server.FindTopDocuments("--пушистый"s)) {
+        for (const Document& document : *documents) {
             PrintDocument(document);
         }
     } else {
         cout << "Ошибка в поисковом запросе"s << endl;
     }
-}
+} 
