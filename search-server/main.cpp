@@ -152,6 +152,7 @@ public:
         vector<string> matched_words;
         for (const string& word : query.plus_words) 
         {
+            if (!IsValidWord(word)) return false;
             if (word_to_document_freqs_.count(word) == 0) 
             {
                 continue;
@@ -163,6 +164,7 @@ public:
         }
         for (const string& word : query.minus_words) 
         {
+            if (!IsValidWord(word)) return false;
             if (word_to_document_freqs_.count(word) == 0) 
             {
                 continue;
