@@ -91,7 +91,7 @@ public:
     }
 
     // добавление нового документа
-    [[nodiscard]] bool AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) 
+    bool AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) 
     {
         if(!IsValidDocument(document_id, document)) return false;
 
@@ -219,22 +219,7 @@ private:
     {
         return !(documents_.count(document_id) > 0 || document_id < 0 || !IsValidWord(document));
     }
-    /*
-    static bool CheckQuery(const string& str)
-    {
-        return CheckMinusWords(str) || IsValidWord(str);
-    }
-
-    static bool CheckMinusWords(const string& word)
-    {
-        for (int i = 0; i < word.size(); i++)
-        {
-            if (word[i] == '-' && (word[i - 1] == '-' || i == word.size() - 1 || (word[i + 1] && word[i + 1] == ' ')))
-            return false;
-        }
-        return true;
-    }
-    */
+    
     static bool IsValidWord(const string& word) 
     {
         // A valid word must not contain special characters
@@ -330,8 +315,8 @@ private:
     }
 
     // расчет релевантности документа
-    template <typename KeyMapper>
-    vector<Document> FindAllDocuments(const Query& query, KeyMapper key_mapper) const 
+    template <typename DocumentPredicate>
+    vector<Document> FindAllDocuments(const Query& query, DocumentPredicate document_predicate) const 
     {
         map<int, double> document_to_relevance;
         for (const string& word : query.plus_words) 
@@ -343,7 +328,7 @@ private:
             const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
             for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) 
             {
-                if (key_mapper(document_id, documents_.at(document_id).status, documents_.at(document_id).rating)) 
+                if (document_predicate(document_id, documents_.at(document_id).status, documents_.at(document_id).rating)) 
                 {
                     document_to_relevance[document_id] += term_freq * inverse_document_freq;
                 }
