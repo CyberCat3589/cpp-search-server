@@ -123,6 +123,8 @@ public:
             matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
         }
 
+        result = matched_documents;
+
         return true;
     }
 
@@ -201,14 +203,24 @@ private:
     map<string, map<int, double>> word_to_document_freqs_; // слова, id документов, tf
     map<int, DocumentData> documents_; // id, рейтинг, статус
 
-    static bool CheckQuery(const string& str)
+    static bool CheckQuery(const string& text) 
     {
-        return CheckMinusWords(str) || IsValidWord(str);
+        for (int i = 0; i < text.size(); i++)
+        {
+            if (text[i] == '-' && (i == 0 || text[i - 1] == '-' || i == text.size() - 1 || (text[i + 1] && text[i + 1] == ' ')))
+                return true;
+        }
+        return false;
     }
 
     bool IsValidDocument(int document_id, const string& document) const 
     {
         return !(documents_.count(document_id) > 0 || document_id < 0 || !IsValidWord(document));
+    }
+    /*
+    static bool CheckQuery(const string& str)
+    {
+        return CheckMinusWords(str) || IsValidWord(str);
     }
 
     static bool CheckMinusWords(const string& word)
@@ -220,7 +232,7 @@ private:
         }
         return true;
     }
-
+    */
     static bool IsValidWord(const string& word) 
     {
         // A valid word must not contain special characters
