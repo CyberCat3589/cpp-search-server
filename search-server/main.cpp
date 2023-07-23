@@ -77,11 +77,7 @@ public:
 
     explicit SearchServer(const string& text)
     {
-        for (const string& word : SplitIntoWords(text)) 
-        {
-            if(!IsValidWord(word)) throw invalid_argument("Переданное стоп-слово содержит спец. символы!!!"s);
-            stop_words_.insert(word);
-        }
+        SearchServer(SplitIntoWords(text));
     }
 
     template <typename StringContainer>
@@ -89,7 +85,10 @@ public:
     {
         for(string word : container)
         {
-            if(!IsValidWord(word)) throw invalid_argument("Переданное стоп-слово содержит спец. символы!!!"s);
+            if(!IsValidWord(word))
+            {
+                throw invalid_argument("Переданное стоп-слово содержит спец. символы!!!"s);
+            }
             if(!word.empty() && (stop_words_.count(word) == 0)) stop_words_.insert(word);
         }
     }
