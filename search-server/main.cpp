@@ -96,7 +96,8 @@ public:
     // добавление нового документа
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) 
     {
-        if(!IsValidDocument(document_id, document)) throw invalid_argument("Неверный формат документа!!!"s);
+        if(!IsValidDocumentID(document_id)) throw invalid_argument("Недопустимый id документа!!!"s);
+        if(IsValidWord(document)) throw invalid_argument("Текст документа содержит спец. символы!!!"s);
 
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size(); // расчет term frequency
@@ -216,9 +217,9 @@ private:
         return false;
     }
 
-    bool IsValidDocument(int document_id, const string& document) const 
+    bool IsValidDocumentID(int document_id) const 
     {
-        return !(documents_.count(document_id) > 0 || document_id < 0 || !IsValidWord(document));
+        return !(documents_.count(document_id) > 0 || document_id < 0);
     }
     
     static bool IsValidWord(const string& word) 
