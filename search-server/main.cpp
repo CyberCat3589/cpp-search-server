@@ -119,8 +119,6 @@ public:
     template <typename DocumentPredicate>
     vector<Document> FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const 
     {
-        if(CheckQuery(raw_query) || !IsValidWord(raw_query)) throw invalid_argument("Недопустимый запрос!!!"s); 
-
         const Query query = ParseQuery(raw_query);
         auto matched_documents = FindAllDocuments(query, document_predicate);
 
@@ -157,12 +155,12 @@ public:
 
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const 
     {
-        if(CheckQuery(raw_query)) throw invalid_argument("Недопустимый запрос!!!"s);
+        //if(CheckMinusWord(raw_query)) throw invalid_argument("Недопустимый запрос!!!"s);
         const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
         for (const string& word : query.plus_words) 
         {
-            if (!IsValidWord(word)) throw invalid_argument("Недопустимый запрос!!!"s);;
+            //if (!IsValidWord(word)) throw invalid_argument("Недопустимый запрос!!!"s);
             if (word_to_document_freqs_.count(word) == 0) 
             {
                 continue;
@@ -174,7 +172,7 @@ public:
         }
         for (const string& word : query.minus_words) 
         {
-            if (!IsValidWord(word)) throw invalid_argument("Недопустимый запрос!!!"s);;
+            //if (!IsValidWord(word)) throw invalid_argument("Недопустимый запрос!!!"s);
             if (word_to_document_freqs_.count(word) == 0) 
             {
                 continue;
@@ -214,7 +212,7 @@ private:
     map<string, map<int, double>> word_to_document_freqs_; // слова, id документов, tf
     map<int, DocumentData> documents_; // id, рейтинг, статус
 
-    static bool CheckQuery(const string& text) 
+    static bool CheckMinusWord(const string& text) 
     {
         for (int i = 0; i < text.size(); i++)
         {
@@ -282,6 +280,16 @@ private:
     // возврат слова из запроса и его характеристик: стоп или минус слово
     QueryWord ParseQueryWord(string text) const 
     {
+        if(CheckMinusWord(text))
+        {
+            throw invalid_argument("Ошибка при вводе минус-слов!!!"s);
+        }
+
+        if(!IsValidWord(text))
+        {
+            throw invalid_argument("Запрос содержит спец. символы!!!"s);
+        }
+
         bool is_minus = false;
         // Word shouldn't be empty
         if (text[0] == '-') 
