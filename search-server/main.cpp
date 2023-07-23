@@ -105,7 +105,7 @@ public:
         {
             throw invalid_argument("Текст документа содержит спец. символы!!!"s);
         }
-         
+        documents_ids_.push_back(document_id);
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size(); // расчет term frequency
         for (const string& word : words) 
@@ -192,7 +192,7 @@ public:
         if (index > documents_.size() || index < 0) throw out_of_range("Недопустимый индекс документа!!!"s);
         int i = 0;
         int t_id = 0;
-        for (const auto [id, bruh] : documents_)
+        for (const int id : documents_ids_)
         {
             if (i == index)
                 return id;
@@ -211,6 +211,7 @@ private:
     set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_; // слова, id документов, tf
     map<int, DocumentData> documents_; // id, рейтинг, статус
+    vector<int> documents_ids_;
 
     static bool CheckMinusWord(const string& text) 
     {
