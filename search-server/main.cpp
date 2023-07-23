@@ -96,9 +96,16 @@ public:
     // добавление нового документа
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) 
     {
-        if(!IsValidDocumentID(document_id)) throw invalid_argument("Недопустимый id документа!!!"s);
-        if(IsValidWord(document)) throw invalid_argument("Текст документа содержит спец. символы!!!"s);
-
+        if(!IsValidDocumentID(document_id))
+        {
+            throw invalid_argument("Недопустимый id документа!!!"s);
+        }
+        
+        if(IsValidWord(document))
+        {
+            throw invalid_argument("Текст документа содержит спец. символы!!!"s);
+        }
+         
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size(); // расчет term frequency
         for (const string& word : words) 
