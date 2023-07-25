@@ -208,8 +208,7 @@ private:
 
     static bool CheckMinusWord(const string& text) 
     {
-        if (text[0] == '-' || text.empty()) return true;
-        return false;
+       return (text[0] == '-' || text.empty());
     }
 
     bool IsValidDocumentID(int document_id) const 
