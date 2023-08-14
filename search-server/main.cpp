@@ -185,7 +185,9 @@ public:
 
         sort(matched_documents.begin(), matched_documents.end(),
              [](const Document& lhs, const Document& rhs) {
-                 return lhs.relevance > rhs.relevance || ((std::abs(lhs.relevance - rhs.relevance) < EPSILON) && lhs.rating > rhs.rating);
+                 return lhs.relevance > rhs.relevance || 
+                 ((std::abs(lhs.relevance - rhs.relevance) < EPSILON) && 
+                 lhs.rating > rhs.rating);
              });
         if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) 
         {
@@ -251,16 +253,7 @@ public:
     int GetDocumentId(int index) const 
     {
         if (index > documents_.size() || index < 0) throw out_of_range("Недопустимый индекс документа!!!"s);
-        int i = 0;
-        int t_id = 0;
-        for (const int id : documents_ids_)
-        {
-            if (i == index)
-                return id;
-            i++;
-            t_id = id;
-        }
-        return t_id;
+        return documents_ids_.at(index);
     }
     
 private:
@@ -276,12 +269,7 @@ private:
 
     static bool CheckMinusWord(const string& text) 
     {
-        for (int i = 0; i < text.size(); i++)
-        {
-            if (text[i] == '-' && (i == 0 || text[i - 1] == '-' || i == text.size() - 1 || (text[i + 1] && text[i + 1] == ' ')))
-                return true;
-        }
-        return false;
+       return (text[0] == '-' || text.empty());
     }
 
     bool IsValidDocumentID(int document_id) const 
@@ -342,11 +330,6 @@ private:
     // возврат слова из запроса и его характеристик: стоп или минус слово
     QueryWord ParseQueryWord(string text) const 
     {
-        if(CheckMinusWord(text))
-        {
-            throw invalid_argument("Ошибка при вводе минус-слов!!!"s);
-        }
-
         if(!IsValidWord(text))
         {
             throw invalid_argument("Запрос содержит спец. символы!!!"s);
@@ -358,6 +341,11 @@ private:
         {
             is_minus = true;
             text = text.substr(1);
+
+            if(CheckMinusWord(text))
+            {
+                throw invalid_argument("Ошибка при вводе минус-слов!!!"s);
+            }
         }
         return {text, is_minus, IsStopWord(text)};
     }
