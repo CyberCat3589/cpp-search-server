@@ -63,11 +63,72 @@ struct Document
     int rating = 0;
 };
 
-enum class DocumentStatus {
+enum class DocumentStatus 
+{
     ACTUAL,
     IRRELEVANT,
     BANNED,
     REMOVED,
+};
+
+template <typename Iterator>
+class IteratorRange
+{
+public:
+    IteratorRange(Iterator& begin, Iterator& end) : begin_(begin), end_(end) {}
+
+    auto begin()
+    {
+        return begin_;
+    }
+
+    auto end()
+    {
+        return end_;
+    }
+
+    size_t size()
+    {
+        return distance(begin_, end_);
+    }
+
+private:
+    Iterator& begin_;
+    Iterator& end_;
+};
+
+template <typename Iterator>
+class Paginator
+{
+public:
+    Paginator(Iterator& begin, Iterator& end, size_t page_size)
+    {
+        while(distance(begin, end) >= page_size)
+        {
+            auto current_page_break = next(begin, page_size);
+            pages_.push_back({begin, current_page_break});
+            begin = current_page_break;
+        }
+        pages_.push_back({begin, end});
+    }
+
+    auto begin()
+    {
+        return pages.begin();
+    }
+
+    auto end()
+    {
+        return pages.end();
+    }
+
+    size_t size()
+    {
+        return pages.size();
+    }
+
+private:
+    vector<IteratorRange> pages_;
 };
 
 class SearchServer {
