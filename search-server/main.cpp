@@ -433,6 +433,12 @@ void PrintDocument(const Document& document)
          << " }"s << endl;
 }
 
+template <typename Container>
+auto Paginate(Container& container, size_t page_size)
+{
+    return Paginator(begin(container), end(container), page_size);
+}
+
 int main() 
 {
     
