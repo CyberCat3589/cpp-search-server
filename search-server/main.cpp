@@ -58,10 +58,30 @@ struct Document
 
     Document(int id_in, double relevance_in, int rating_in) : id(id_in), relevance(relevance_in), rating(rating_in) {}
 
+    friend ostream& operator<<(ostream& os, const Document document)
+    {
+        os << "{ "s
+         << "document_id = "s << document.id << ", "s
+         << "relevance = "s << document.relevance << ", "s
+         << "rating = "s << document.rating
+         << " }"s << endl;
+        
+        return os;
+    }
+
     int id = 0;
     double relevance = 0;
     int rating = 0;
 };
+
+ostream& operator<<(ostream& os, const vector<Document> documents)
+{
+    for(auto document : documents)
+    {
+        os << document;
+    }
+    return os;
+}
 
 enum class DocumentStatus 
 {
@@ -77,17 +97,17 @@ class IteratorRange
 public:
     IteratorRange(Iterator& begin, Iterator& end) : begin_(begin), end_(end) {}
 
-    auto begin()
+    auto begin() const
     {
         return begin_;
     }
 
-    auto end()
+    auto end() const
     {
         return end_;
     }
 
-    size_t size()
+    size_t size() const
     {
         return distance(begin_, end_);
     }
@@ -101,7 +121,7 @@ template <typename Iterator>
 class Paginator
 {
 public:
-    Paginator(Iterator& begin, Iterator& end, size_t page_size)
+    Paginator(Iterator begin, Iterator end, size_t page_size)
     {
         while(distance(begin, end) >= page_size)
         {
@@ -112,24 +132,32 @@ public:
         pages_.push_back({begin, end});
     }
 
-    auto begin()
+    auto begin() const
     {
         return pages_.begin();
     }
 
-    auto end()
+    auto end() const
     {
         return pages_.end();
     }
 
-    size_t size()
+    size_t size() const
     {
         return pages_.size();
     }
 
 private:
-    vector<IteratorRange> pages_;
+    vector<IteratorRange<Iterator>> pages_;
 };
+
+template <typename Iterator>
+ostream& operator<<(ostream& out, const IteratorRange<Iterator>& it)
+{
+    
+
+    return os;
+}
 
 class SearchServer {
 public:
@@ -162,7 +190,7 @@ public:
             throw invalid_argument("Недопустимый id документа!!!"s);
         }
         
-        if(IsValidWord(document))
+        if(!IsValidWord(document))
         {
             throw invalid_argument("Текст документа содержит спец. символы!!!"s);
         }
@@ -424,13 +452,14 @@ private:
     }
 };
 
-void PrintDocument(const Document& document) 
+template <typename Iterator>
+void PrintDocument(ostream& out, Iterator& it)
 {
-    cout << "{ "s
+    /*cout << "{ "s
          << "document_id = "s << document.id << ", "s
          << "relevance = "s << document.relevance << ", "s
          << "rating = "s << document.rating
-         << " }"s << endl;
+         << " }"s << endl;*/
 }
 
 template <typename Container>
@@ -448,6 +477,7 @@ int main()
     search_server.AddDocument(4, "big dog cat Vladislav"s, DocumentStatus::ACTUAL, {1, 3, 2});
     search_server.AddDocument(5, "big dog hamster Borya"s, DocumentStatus::ACTUAL, {1, 1, 1});
     const auto search_results = search_server.FindTopDocuments("curly dog"s);
+    
     int page_size = 2;
     const auto pages = Paginate(search_results, page_size);
     // Выводим найденные документы по страницам
