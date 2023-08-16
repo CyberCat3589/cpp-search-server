@@ -134,13 +134,14 @@ class Paginator
 public:
     Paginator(Iterator begin, Iterator end, size_t page_size)
     {
-        while(distance(begin, end) >= page_size)
+        Iterator current = begin;
+        while (current != end)
         {
-            auto current_page_break = next(begin, page_size);
-            pages_.push_back({begin, current_page_break});
-            begin = current_page_break;
+            Iterator current_page_break = current;
+            advance(current_page_break, min(page_size, size_t(distance(current, end))));
+            pages_.emplace_back(current, current_page_break);
+            current = current_page_break;
         }
-        pages_.push_back({begin, end});
     }
 
     auto begin() const
