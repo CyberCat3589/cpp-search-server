@@ -117,6 +117,17 @@ private:
     Iterator& end_;
 };
 
+template<typename Iterator>
+ostream& operator<<(ostream& out, const IteratorRange<Iterator>& it)
+{
+    for (const auto& elem : it)
+    {
+        out << elem;
+    }
+    out << endl;
+    return out;
+}
+
 template <typename Iterator>
 class Paginator
 {
@@ -151,13 +162,17 @@ private:
     vector<IteratorRange<Iterator>> pages_;
 };
 
-template <typename Iterator>
-ostream& operator<<(ostream& out, const IteratorRange<Iterator>& it)
+template<typename Iterator>
+ostream& operator<<(ostream& out, vector<IteratorRange<Iterator>> iter_vec)
 {
-    
-
-    return os;
+    for (const auto elem : iter_vec)
+    {
+        out << elem;
+    }
+    out << endl;
+    return out;
 }
+
 
 class SearchServer {
 public:
@@ -451,16 +466,6 @@ private:
         return matched_documents;
     }
 };
-
-template <typename Iterator>
-void PrintDocument(ostream& out, Iterator& it)
-{
-    /*cout << "{ "s
-         << "document_id = "s << document.id << ", "s
-         << "relevance = "s << document.relevance << ", "s
-         << "rating = "s << document.rating
-         << " }"s << endl;*/
-}
 
 template <typename Container>
 auto Paginate(Container& container, size_t page_size)
