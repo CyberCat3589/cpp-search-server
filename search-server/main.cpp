@@ -404,39 +404,40 @@ class RequestQueue
 
 public:
 
-    explicit RequestQueue(const SearchServer& search_server) 
-    : server_(search_server), 
-    no_results_requests_(0), 
-    current_time_(0) {}
-
-    // сделаем "обёртки" для всех методов поиска, чтобы сохранять результаты для нашей статистики
+    explicit RequestQueue(const SearchServer& search_server)
+        : search_server_(search_server)
+        , no_results_requests_(0)
+        , current_time_(0) {
+    }
+ 
+    // сделаем "обертки" для всех методов поиска, чтобы сохранять результаты для нашей статистики
     template <typename DocumentPredicate>
     vector<Document> AddFindRequest(const string& raw_query, DocumentPredicate document_predicate) 
     {
-        const auto result = server_.FindTopDocuments(raw_query, document_predicate);
+        const auto result = search_server_.FindTopDocuments(raw_query, document_predicate);
         AddRequest(result.size());
         return result;
     }
-
+ 
     vector<Document> AddFindRequest(const string& raw_query, DocumentStatus status) 
     {
-        const auto result = server_.FindTopDocuments(raw_query, status);
+        const auto result = search_server_.FindTopDocuments(raw_query, status);
         AddRequest(result.size());
         return result;
     }
-
+ 
     vector<Document> AddFindRequest(const string& raw_query) 
     {
-        const auto result = server_.FindTopDocuments(raw_query);
+        const auto result = search_server_.FindTopDocuments(raw_query);
         AddRequest(result.size());
         return result;
     }
-
+ 
     int GetNoResultRequests() const 
     {
         return no_results_requests_;
     }
-
+ 
 private:
 
     struct QueryResult 
@@ -444,14 +445,14 @@ private:
         uint64_t timestamp;
         int results;
     };
-
-    SearchServer server_;
+    
     deque<QueryResult> requests_;
-    const static int min_in_day_ = 1440;
-    unsigned long current_time_;
+    const SearchServer& search_server_;
     int no_results_requests_;
-
-    void AddRequest(int results_num)
+    uint64_t current_time_;
+    const static int min_in_day_ = 1440;
+ 
+    void AddRequest(int results_num) 
     {
         // новый запрос - новая секунда
         ++current_time_;
@@ -466,7 +467,8 @@ private:
         }
         // сохраняем новый результат поиска
         requests_.push_back({current_time_, results_num});
-        if (0 == results_num) {
+        if (0 == results_num) 
+        {
             ++no_results_requests_;
         }
     }
@@ -487,8 +489,8 @@ int main()
     search_server.AddDocument(3, "big cat fancy collar "s, DocumentStatus::ACTUAL, {1, 2, 8});
     search_server.AddDocument(4, "big dog sparrow Eugene"s, DocumentStatus::ACTUAL, {1, 3, 2});
     search_server.AddDocument(5, "big dog sparrow Vasiliy"s, DocumentStatus::ACTUAL, {1, 1, 1});
+    
     // 1439 запросов с нулевым результатом
-
     for (int i = 0; i < 1439; ++i) 
     {
         request_queue.AddFindRequest("empty request"s);
