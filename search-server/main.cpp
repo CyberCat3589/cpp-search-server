@@ -176,9 +176,9 @@ class RequestQueue
 
 public:
 
-    explicit RequestQueue(const SearchServer& search_server) 
+    explicit RequestQueue(const SearchServer& search_server) : server_(search_server)
     {
-        // напишите реализацию
+        current_time_ = 0;
     }
 
     // сделаем "обёртки" для всех методов поиска, чтобы сохранять результаты для нашей статистики
@@ -200,7 +200,7 @@ public:
 
     int GetNoResultRequests() const 
     {
-        // напишите реализацию
+        return no_result_count_;
     }
 
 private:
@@ -210,18 +210,22 @@ private:
         // определите, что должно быть в структуре
     };
 
+    SearchServer server_;
     deque<QueryResult> requests_;
     const static int min_in_day_ = 1440;
-    // возможно, здесь вам понадобится что-то ещё
+    unsigned long current_time_;
+    int no_result_count_;
 };
 
-class SearchServer {
+class SearchServer 
+{
 public:
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words))  // Extract non-empty stop words
     {
-        if (!all_of(stop_words_.begin(), stop_words_.end(), IsValidWord)) {
+        if (!all_of(stop_words_.begin(), stop_words_.end(), IsValidWord)) 
+        {
             throw invalid_argument("Some of stop words are invalid"s);
         }
     }
@@ -457,7 +461,7 @@ int main()
     search_server.AddDocument(4, "big dog sparrow Eugene"s, DocumentStatus::ACTUAL, {1, 3, 2});
     search_server.AddDocument(5, "big dog sparrow Vasiliy"s, DocumentStatus::ACTUAL, {1, 1, 1});
     // 1439 запросов с нулевым результатом
-    
+
     for (int i = 0; i < 1439; ++i) 
     {
         request_queue.AddFindRequest("empty request"s);
