@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 template <typename Iterator>
 class IteratorRange
@@ -49,7 +50,7 @@ public:
         while (current != end)
         {
             Iterator current_page_break = current;
-            advance(current_page_break, min(page_size, size_t(distance(current, end))));
+            advance(current_page_break, std::min(page_size, size_t(distance(current, end))));
             pages_.emplace_back(current, current_page_break);
             current = current_page_break;
         }
@@ -71,7 +72,7 @@ public:
     }
 
 private:
-    vector<IteratorRange<Iterator>> pages_;
+    std::vector<IteratorRange<Iterator>> pages_;
 };
 
 template<typename Iterator>
@@ -81,7 +82,7 @@ std::ostream& operator<<(std::ostream& out, std::vector<IteratorRange<Iterator>>
     {
         out << elem;
     }
-    out << endl;
+    out << std::endl;
     return out;
 }
 
