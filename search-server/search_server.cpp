@@ -94,7 +94,8 @@ std::vector<std::string> SearchServer::SplitIntoWordsNoStop(const std::string& t
             throw std::invalid_argument(std::string("Word ") + word + std::string(" is invalid"));
         }
 
-        if (!IsStopWord(word)) {
+        if (!IsStopWord(word)) 
+        {
             words.push_back(word);
         }
     }
@@ -106,8 +107,8 @@ int SearchServer::ComputeAverageRating(const std::vector<int>& ratings)
     if (ratings.empty()) {
         return 0;
     }
-    int rating_sum = 0;
-    std::accumulate(ratings.begin(), ratings.end(), rating_sum);
+    
+    int rating_sum = std::accumulate(ratings.begin(), ratings.end(), 0);
     
     return rating_sum / static_cast<int>(ratings.size());
 }
