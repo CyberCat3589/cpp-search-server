@@ -12,7 +12,7 @@ class LogDuration
 
 public:
 
-    LogDuration(std::string operation, std::ostream& stream) : operation_name_(operation), stream_(stream) {}
+    LogDuration(std::string operation, std::ostream& stream) : operation_name_(operation), out_stream_(stream) {}
 
     ~LogDuration()
     {
@@ -20,11 +20,11 @@ public:
 
         const Clock::time_point end_time = Clock::now();
         const Clock::duration duration = end_time - start_time_;
-        stream_ << operation_name_ << ": " << duration_cast<milliseconds>(duration).count() << " ms" << std::endl;
+        out_stream_ << operation_name_ << ": " << duration_cast<milliseconds>(duration).count() << " ms" << std::endl;
     }
 
 private:
     std::string operation_name_;
     const Clock::time_point start_time_ = Clock::now();
-    std::ostream& stream_;
+    std::ostream& out_stream_ = std::cerr;
 };
