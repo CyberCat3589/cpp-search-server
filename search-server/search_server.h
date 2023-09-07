@@ -6,6 +6,7 @@
  
 #include "document.h"
 #include "string_processing.h"
+#include "log_duration.h"
 
 const double EPSILON = 1e-6;
 
@@ -89,6 +90,8 @@ private:
     template <typename DocumentPredicate>
     std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query, DocumentPredicate document_predicate) const 
     {
+        LOG_DURATION("Operation time", std::cout);
+        
         const auto query = ParseQuery(raw_query);
 
         auto matched_documents = FindAllDocuments(query, document_predicate);
