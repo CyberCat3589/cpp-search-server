@@ -4,7 +4,10 @@
 #include <chrono>
 #include <string>
 
-#define LOG_DURATION(operation, out_stream) LogDuration profile_guard(operation, out_stream)
+#define PROFILE_CONCAT_INTERNAL(X, Y) X##Y
+#define PROFILE_CONCAT(X, Y) PROFILE_CONCAT_INTERNAL(X, Y)
+#define UNIQUE_VAR_NAME_PROFILE PROFILE_CONCAT(profileGuard, __LINE__)
+#define LOG_DURATION(x) LogDuration UNIQUE_VAR_NAME_PROFILE(x)
 
 class LogDuration
 {
